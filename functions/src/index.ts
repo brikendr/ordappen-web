@@ -40,13 +40,11 @@ async function getRandomWordFromDictionary (wordExlcudeList: Array<String>, retr
   }
   const wordRef = queryRef.docs[0];
 
-  if (wordExlcudeList.indexOf(wordRef.id) > -1 && retryCount <= MAX_RETRIES) {
-    console.log('------------------ RECURSION!');
+  if (wordExlcudeList.indexOf(wordRef.id) > -1 && retryCount > 0) {
+    console.log(':: Recursion! Retries left: ', (retryCount - 1));
     return getRandomWordFromDictionary(wordExlcudeList, (retryCount - 1));
-  } else {
-    console.log('------------------ No need for recursion! Returning the new word!');
-    return wordRef.id;
   }
+  return wordRef.id;
 }
 
 async function userDailyWordUpdate (change: any, context: any): Promise<void> {
@@ -60,7 +58,7 @@ async function userDailyWordUpdate (change: any, context: any): Promise<void> {
       console.log('--------------------------- Hurra it\'s SUNDAY! Emptying the list');
       weeklyWordList = [];
     }
-    const randWordId = await getRandomWordFromDictionary(weeklyWordList, 10);
+    const randWordId = await getRandomWordFromDictionary(weeklyWordList, MAX_RETRIES);
     db.collection('dailyword').doc(dailyWordRef.id).update({
       should_update: false,
       todays_word: randWordId,
